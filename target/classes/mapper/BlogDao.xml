@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.evil.blog.dao.BlogDao">
+
+    <!--后台管理：实体类与字段的映射-->
+    <resultMap type="cn.evil.blog.entity.Blog" id="blogResult">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="content" column="content"/>
+        <result property="typeId" column="type_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="flag" column="flag"/>
+        <result property="views" column="views"/>
+        <result property="appreciation" column="appreciation"/>
+        <result property="shareStatement" column="share_statement"/>
+        <result property="commentabled" column="commentabled"/>
+        <result property="published" column="published"/>
+        <result property="recommend" column="recommend"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <association property="type" javaType="cn.evil.blog.entity.Type">
+            <id property="id" column="tid"/>
+            <result property="name" column="name"/>
+        </association>
+    </resultMap>
+
+    <!--后台管理：根据条件查询博客-->
+    <select id="searchByTitleAndTypeAndRecommend" resultMap="blogResult">
+        <bind name="keyword" value="'%' + title + '%'" />
+        select b.*,t.id tid,t.name from blog b,type t
+        where
+            b.type_id=t.id
+            and recommend=#{recommend}
+            <if test="title != null">
+                and b.title like #{keyword}
+            </if>
+            <if test="typeId!= null">
+                and t.id=#{typeId}
+            </if>
+    </select>
+    <!--后台管理：查询所有博客-->
+    <select id="findAll" resultMap="blogResult">
+        select b.*,t.id tid,t.name from blog b
+        left outer join type t on b.type_id=t.id;
+    </select>
+    <!--后台管理：根据id查询博客-->
+    <select id="getBlog" parameterType="long" resultMap="blogResult">
+        select b.*,t.id tid,t.name from blog b
+        left outer join type t on b.type_id=t.id
+        where b.id=#{id}
+    </select>
+    <!--后台管理：添加博客-->
+    <insert id="saveBlog" parameterType="Blog" useGeneratedKeys="true" keyProperty="id">
+        insert into blog (
+            type_id,user_id,title,description,content,first_picture,flag,views,appreciation,share_statement,
+            commentabled,published,recommend,create_time,update_time
+        ) values (
+            #{type.id},#{user.id},#{title},#{description},#{content},#{firstPicture},#{flag},#{views},#{appreciation},#{shareStatement},
+            #{commentabled},#{published},#{recommend},#{createTime},#{updateTime}
+        )
+    </insert>
+    <!--后台管理：更新博客-->
+    <update id="updateBlog" parameterType="Blog">
+        update blog
+        set
+            title=#{title},type_id=#{typeId},description=#{description},content=#{content},first_picture=#{firstPicture},
+            flag=#{flag},appreciation=#{appreciation},share_statement=#{shareStatement},commentabled=#{commentabled},
+            published=#{published},recommend=#{recommend},update_time=#{updateTime}
+        where id=#{id}
+    </update>
+    <!--后台管理：根据id删除博客-->
+    <delete id="deleteBlog" parameterType="long">
+        delete from blog where id=#{id}
+    </delete>
+
+    <!-- 博客前端 -->
+    <resultMap type="cn.evil.blog.entity.Blog" id="blogShow">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="content" column="content"/>
+        <result property="typeId" column="type_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="flag" column="flag"/>
+        <result property="views" column="views"/>
+        <result property="appreciation" column="appreciation"/>
+        <result property="shareStatement" column="share_statement"/>
+        <result property="commentabled" column="commentabled"/>
+        <result property="published" column="published"/>
+        <result property="recommend" column="recommend"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <association property="type" javaType="cn.evil.blog.entity.Type">
+            <id property="id" column="tid"/>
+            <result property="name" column="name"/>
+        </association>
+        <association property="user" column="user_id" select="getUser"></association>
+        <collection property="tags" select="getTags" column="id"></collection>
+    </resultMap>
+    <!--博客前端：查询所有博客及其对应的type，user，tags等属性-->
+    <select id="findBlogToIndex" resultMap="blogShow">
+        select b.*,t.id tid,t.name from blog b
+        left outer join type t on b.type_id=t.id;
+    </select>
+    <select id="getUser" parameterType="long" resultType="User">
+        select u.* from user u where u.id=#{user_id}
+    </select>
+    <select id="getTags" resultType="Tag">
+        select t.id,t.name from tag t
+        join blog_tag bt on t.id=bt.tag_id
+        where bt.blog_id=#{id}
+    </select>
+    <!--博客前端：根据id获取博客详情-->
+    <select id="getBlogToDetail" parameterType="long" resultMap="blogShow">
+        select b.*,t.id tid,t.name from blog b
+        left outer join type t on b.type_id=t.id
+        where b.id=#{id}
+    </select>
+    <!--博客前端：根据关键词搜索博客-->
+    <select id="searchBlogByQuery" resultMap="blogShow">
+        <bind name="keyword" value="'%' + query + '%'" />
+        select
+            b.id,b.user_id,b.title,b.description,b.views,b.update_time,b.first_picture,
+            t.id tid,t.name from blog b
+        left outer join type t on b.type_id=t.id
+        where
+            b.title like #{keyword} or b.content like #{keyword}
+        order by b.update_time desc
+    </select>
+    <!--访问数+1-->
+    <insert id="addViewsFromBlog" parameterType="long">
+        update blog b set b.views=b.views+1 where b.id=#{id}
+    </insert>
+    <!--根据TypeId查找博客-->
+    <select id="findBlogByTypeId" parameterType="long" resultMap="blogShow">
+        select b.*,t.id tid,t.name from blog b
+        left outer join type t on b.type_id=t.id
+        where b.type_id=#{typeId}
+    </select>
+    <!--根据TagId查找博客-->
+    <select id="findBlogByTagId" parameterType="long" resultMap="blogShow">
+        select b.*,t.id tid,t.name from blog b
+        left outer join type t on b.type_id=t.id
+        join blog_tag bt on b.id=bt.blog_id
+        where bt.tag_id=#{tagId}
+    </select>
+
+    <!--归档-->
+<!--    <select id="findGroupByYear" resultType="string">-->
+<!--        select YEAR(update_time) as y from blog group by y order by y desc-->
+<!--    </select>-->
+<!--    <select id="findBlogByYear" parameterType="string" resultMap="blogShow">-->
+<!--        select b.* from blog b where YEAR(update_time)=#{year} order by update_time desc-->
+<!--    </select>-->
+    <select id="countBlog" resultType="int">
+        select count(*) from blog
+    </select>
+
+    <select id="findRecommendBlog" resultMap="blogResult">
+        select b.* from blog b 
+        where recommend=1 order by update_time desc limit 4
+    </select>
+    <select id="findNewBlog" resultMap="blogResult">
+        select b.* from blog b order by update_time desc limit 3
+    </select>
+    <select id="findArchivesBlog" resultType="Blog">
+        select b.id,b.title,b.update_time from blog b order by update_time desc
+    </select>
+</mapper>

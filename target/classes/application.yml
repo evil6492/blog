@@ -1,0 +1,15 @@
+spring:
+  thymeleaf:
+    mode: HTML
+    encoding: utf-8
+    cache: false
+    prefix: classpath:/templates/
+  profiles:
+    active: dev
+
+
+#应该以什么样的路径来访问静态资源,这表示只有静态资源的访问路径为/static/
+#时才会处理(如http://localhost:8080/static/css/base.css)
+
+comment.avatar: /images/avatar.jpg
+

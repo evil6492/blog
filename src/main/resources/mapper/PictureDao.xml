@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.evil.blog.dao.PictureDao">
+
+
+    <delete id="deletePictureById" parameterType="long">
+        delete from picture where id=#{pid}
+    </delete>
+    <insert id="addPicture" parameterType="Picture">
+        insert into picture (name,a_url,img_url,descr) values(#{name},#{aUrl},#{imgUrl},#{descr})
+    </insert>
+
+    <update id="updatePicture" parameterType="Picture">
+        update picture
+        set name=#{name},a_url=#{aUrl},img_url=#{imgUrl},descr=#{descr}
+        where id=#{id}
+    </update>
+
+    <select id="getPictureById" parameterType="long" resultType="Picture">
+        select
+            id,name,a_url as aUrl,img_url as imgUrl,descr
+        from picture
+        where id=#{id}
+    </select>
+
+    <select id="findPictures" resultType="Picture">
+        select
+            id,name,a_url as aUrl,img_url as imgUrl,descr
+        from picture order by id desc
+    </select>
+    <select id="getPictureByName" parameterType="string" resultType="Picture">
+        select
+            id,name,a_url as aUrl,img_url as imgUrl,descr
+        from picture
+        where name=#{name}
+    </select>
+
+    <select id="findAll" resultType="Picture">
+        select
+            id,name,a_url as aUrl,img_url as imgUrl,descr
+        from picture order by id desc
+    </select>
+</mapper>
